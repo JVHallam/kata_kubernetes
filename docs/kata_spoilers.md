@@ -1,5 +1,8 @@
 # 1) Hello AKS
 
+* The location of the .kube config file is:
+    * ~/.kube/config
+
 * The cluster details in terraform main.tf:
 resource "azurerm_kubernetes_cluster" "cluster" {
   name                = module.naming.kubernetes_cluster.name_unique
