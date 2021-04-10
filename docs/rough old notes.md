@@ -6,10 +6,6 @@
 * Look into helm charts
 * Kubernetes load balancers
 
-# Installation
-* choco install minikube
-* install kubectl
-
 # Get a cluster running
 * minikube start
 
@@ -21,7 +17,7 @@
 * kubectl create deployment hello-minikube --image=k8s.gcr.io/echoserver:1.4
     * kubectl create deployment name --image=path
 
-* kubectl expose deployment hello-minikube --type=NodePort --port=8080
+* kubectl expose deployment helloaks --type=NodePort --port=8080
     * wtf is 8080 here?
 
 * kubectl get services hello-minikube
@@ -55,8 +51,6 @@
 
 * kubectl config use-context <name>
     * use a particular cluster
-
-* kubectl config get-contexts
 
 * when use-context is set to "", it uses minikube
 
