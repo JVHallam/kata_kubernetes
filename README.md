@@ -46,11 +46,11 @@
     * You should get a readout on what's going on
 
 ## Tear it all down:
-    * Tear down everything in the cluster:
-        * Tear down the services
-        * Tear down the deployment
+* Tear down everything in the cluster:
+    * Tear down the services
+    * Tear down the deployment
 
-    * Tear down everything in azure
-        * Terraform my dude
+* Tear down everything in azure
+    * Terraform my dude
 
-    * Teardown the local contexts from your config
+* Teardown the local contexts from your config
