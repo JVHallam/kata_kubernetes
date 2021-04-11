@@ -1,9 +1,16 @@
 Everything below this line hasn't actually been verified as useful yet
 
+# Stuff to look into:
+* look into what's created in azure
+* look into the scale sets
+
 # Logs, logging and getting those logs
 * I'd like to be able to pull logs
 * Get an image that also allows for a bit of logging
     * kubectl -n uatrc-mobius-simba logs testseeder-testseeder-55ddb8fcc9-zl52b --timestamps > testseederlogs_new.txt
+
+kubectl logs helloaks-5f6746c8b6-cfvxr --timestamps > logs.txt
+az aks list 
 
 kubectl get nodes
 
