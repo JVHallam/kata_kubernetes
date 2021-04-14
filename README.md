@@ -54,3 +54,37 @@
     * Terraform my dude
 
 * Teardown the local contexts from your config
+
+
+---
+
+
+# 2) Working with existing cluster : Logs, logging and getting those logs
+## Use AZ to get all the details
+* ( Deploy the existing cluster, via the infrastructure repo, if not running )
+* Get an object that contains just the name and resourceGroup, and the powerState
+* Activate the instance, if it's power state is "Stopped"
+* get the credentials
+* Check that you're using this context, in the config
+* I want to deploy an image, if there isn't already a service on the cluster
+
+## Get the pod details and the logs:
+* Get the endpoint
+* Query the endpoint, to generate the logs
+* Get the name of the pods, the names only, nothing else, save it into a variable
+* Get the logs
+
+## Setup a storage account to save those logs into
+* Setup a storage container, via terraform
+* Upload the logs to that storage account, via the az tool
+* Check it's there by downloading it via the az tool
+
+## Shutdown the cluster, to prevent incurring further costs:
+* I want to shut everything down, to prevent myself from incurring more costs
+    * Stop the cluster
+    * teardown the storage account details
+
+* Check that the aks instance isn't Going to cost you anything:
+    * Check the power state of the cluster
+    * Check the power state of the agents in the pools
+
