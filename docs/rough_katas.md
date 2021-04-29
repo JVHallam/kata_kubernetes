@@ -134,6 +134,9 @@ kubectl -n uatrc-mobius-simba logs testseeder-testseeder-55ddb8fcc9-zl52b --time
 * Switch context
 * manage many clusters
 
+# Env variables
+* $ENV:KUBECONFIG=./path/to/config
+
 # Getting logs to persist
 * Getting the logs
 * have them persist via redeployments
