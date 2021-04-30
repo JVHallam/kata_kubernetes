@@ -138,6 +138,7 @@ resource "azurerm_kubernetes_cluster" "cluster" {
 
 --------------- --------------- --------------- --------------- --------------- --------------- --------------- --------------- ---------------
 
+
 3) Kata one, but you're only allowed to use yml files
 
 a) Get the cluster setup, you know the drill
@@ -163,10 +164,10 @@ spec:
         app: echo
     spec:
       containers:
-      - name: echo (Should this be echoserver? )
+      - name: echoserver
         image: k8s.gcr.io/echoserver:1.4
 
-* Exposing the echo service
+C) Exposing the echo service
 
 apiVersion: v1
 kind: Service
@@ -181,7 +182,7 @@ spec:
     protocol: TCP
     targetPort: 8080
 
-* Exposing the load balancer service:
+D) Exposing the load balancer service:
 
 apiVersion: v1
 kind: Service
@@ -199,6 +200,10 @@ spec:
     app: echo
   type: LoadBalancer
 
+E) Teardown the setup and the contexts
+    * Delete the contexts
+    * Tear everything down from the environment
+
 z) Shit to add to anki
 
 kubectl get deployment name -o yaml : Effect?
@@ -212,8 +217,8 @@ a) setup:
 * Create your AKS cluster
     * infrastructure repo - run setup
 
-* deploy the influx image
-    * kubectl create deployment $dep_name --image=docker.io/influxdb:1.6.4
+* deploy the influx image, using -f this will make shit easier later
+    * kubectl create deployment influxdb --image=docker.io/influxdb:1.6.4
     * kubectl expose deployment influxdb --port=8086 --target-port=8086 --protocol=TCP --type=ClusterIP
     * kubectl expose deployment influxdb --type=LoadBalancer --name="influxdb-public" --port=8086
 
@@ -231,15 +236,19 @@ b) Setting up usernames and passwords and shit
     * kubectl create secret generic influxdb-creds --from-literal=INFLUXDB_DATABASE=twittergraph --from-literal=INFLUXDB_USERNAME=root --from-literal=INFLUXDB_PASSWORD=root --from-literal=INFLUXDB_HOST=influxdb
 
 apiVersion: v1
+data:
+  INFLUXDB_DATABASE: 
+  INFLUXDB_HOST: 
+  INFLUXDB_PASSWORD: 
+  INFLUXDB_USERNAME: 
 kind: Secret
 metadata:
-  name: secret-basic-auth
-type: kubernetes.io/basic-auth
-stringData:
-  username: admin
-  password: t0p-Secret
-    * kubectl get secrets
-    * kubectl describe secrets influxdb-creds
+  name: influxdb-creds
+  namespace: default
+type: Opaque
+
+* kubectl get secrets
+* kubectl describe secrets influxdb-creds
 
 Either is good, as the above cmd one can be used with keyvault.
 
@@ -254,42 +263,31 @@ Either is good, as the above cmd one can be used with keyvault.
             - secretRef:
                 name: influxdb-creds
 
-    * This can be an object file, kubectl apply -f filename.yml
-    apiVersion: apps/v1
-    kind: Deployment
+* ALTERNITAVLEY This can be an object file, kubectl apply -f filename.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: influxdb
+  name: influxdb
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: influxdb
+  template:
     metadata:
       labels:
         app: influxdb
-      name: influxdb
-      namespace: default
     spec:
-      selector:
-        matchLabels:
-          app: influxdb
-      template:
-        metadata:
-          labels:
-            app: influxdb
-        spec:
-          containers:
-          - envFrom:
-            - secretRef:
-                name: influxdb-creds
-            image: docker.io/influxdb:1.6.4
-            name: influxdb
+      containers:
+      - envFrom:
+        - secretRef:
+            name: influxdb-creds
+        image: docker.io/influxdb:1.6.4
+        name: influxdb
 
-# This one:
-* Deploying an influxdb image
-* Everything here has to be IAC, us the -f stuff as much as possible
-    * This can be practises with env variables and any old setup
-* Setting up a Persistent volume
-* Setting the password and stuff via environment variables
 
-https://opensource.com/article/19/2/deploy-influxdb-grafana-kubernetes
-
-# The secrets are used as the login details
-
-# Then share the new details, with the pod, via env variables in the pod
 
 
 kubectl describe deployment influxdb
@@ -297,30 +295,129 @@ kubectl describe deployment influxdb
     * Environment Variables from:
       influxdb-creds  Secret  Optional: false
 
-----
-
 * Permanent data stores : A persistent volume ( prevents data loss upon pod recycling )
+
+* Create a persistent volume
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: models-1-0-0
+  labels:
+    name: models-1-0-0
+spec:
+  capacity:
+    storage: 200Gi
+  storageClassName: standard
+  accessModes:
+    - ReadOnlyMany
+  gcePersistentDisk:
+    pdName: models-1-0-0
+    fsType: ext4
+    readOnly: true
+
 * PVC : Persistent volume claim
 * kubectl create -f pvc.yml
 * kubectl get pvc
 
+
+* Check the storage classes
+    * kubectl get sc
+
+* this pvc comes from azure
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
+  name: azure-managed-disk
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: managed-premium
+  resources:
+    requests:
+      storage: 5Gi
+
+* mount and make a claim:
+spec:
+  template:
+    spec:
+      containers:
+        volumeMounts:
+        - mountPath: /mnt/azure
+          name: volume
+
+      volumes:
+      - name: volume
+        persistentVolumeClaim:
+          claimName: azure-managed-disk
+
+* Mounting the pvc:
+* kubectl get pvc
+* Add this to the deployment yml and apply
+* Add this to the deployment yml and apply, to mount the volume
+
+* Finished deployment yml:
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "3"
+  creationTimestamp: null
+  generation: 1
   labels:
     app: influxdb
     project: twittergraph
   name: influxdb
+  selfLink: /apis/extensions/v1beta1/namespaces/twittergraph/deployments/influxdb
 spec:
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 2Gi
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: influxdb
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: influxdb
+    spec:
+      containers:
+      - envFrom:
+        - secretRef:
+            name: influxdb-creds
+        image: docker.io/influxdb:1.6.4
+        imagePullPolicy: IfNotPresent
+        name: influxdb
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/lib/influxdb
+          name: var-lib-influxdb
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: var-lib-influxdb
+        persistentVolumeClaim:
+          claimName: influxdb
+status: {}
 
 
-come back to this section later, to finish this off, there's stuff about mounting the pvc
+* What i need to do:
+    * Recycle the pod:
+        * Check if the env variables took, for the login details
+        * Check if the pvc is still there
+        * check if the data persisted, after the recycle
 
 ----
 
 expose the deployment
+https://opensource.com/article/19/2/deploy-influxdb-grafana-kubernetes

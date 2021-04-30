@@ -88,3 +88,31 @@
     * Check the power state of the cluster
     * Check the power state of the agents in the pools
 
+
+---
+
+
+3) Kata one, but you're only allowed to use yml files
+
+a) Get the cluster setup, you know the drill
+    * Invoke the terraform
+    * Get the config into kubectl
+
+b) Get the image deployed, using $kubectl apply -f file :
+    * name : echo
+    * image : k8s.gcr.io/echoserver:1.4
+
+C) Exposing the echo service, using -f:
+    * Expose the port 8080
+
+D) Exposing the load balancer service, using -f:
+    * Expose the port, using the load balancer service
+
+E) Teardown the setup and the contexts
+    * Delete the contexts
+    * Tear everything down from the environment
+
+
+---
+
+
