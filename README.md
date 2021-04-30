@@ -112,6 +112,16 @@ E) Teardown the setup and the contexts
     * Delete the contexts
     * Tear everything down from the environment
 
+E) Could:
+Use a different image
+
+https://hub.docker.com/r/ealen/echo-server
+
+Set environment variables ( Everything at the bottom of the file )
+
+pass them into the image
+
+Check that they're getting set via the thing
 
 ---
 

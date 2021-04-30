@@ -200,6 +200,7 @@ spec:
     app: echo
   type: LoadBalancer
 
+
 E) Teardown the setup and the contexts
     * Delete the contexts
     * Tear everything down from the environment
@@ -231,110 +232,33 @@ a) setup:
     * Query the endpoint, in a browser, port and all, should get a 404
     * influx -host 20.49.134.194 -port 8086
 
-b) Setting up usernames and passwords and shit
-* Create the secrets - to be used for something
-    * kubectl create secret generic influxdb-creds --from-literal=INFLUXDB_DATABASE=twittergraph --from-literal=INFLUXDB_USERNAME=root --from-literal=INFLUXDB_PASSWORD=root --from-literal=INFLUXDB_HOST=influxdb
-
-apiVersion: v1
-data:
-  INFLUXDB_DATABASE: 
-  INFLUXDB_HOST: 
-  INFLUXDB_PASSWORD: 
-  INFLUXDB_USERNAME: 
-kind: Secret
-metadata:
-  name: influxdb-creds
-  namespace: default
-type: Opaque
-
-* kubectl get secrets
-* kubectl describe secrets influxdb-creds
-
-Either is good, as the above cmd one can be used with keyvault.
-
-* edit the deployment
-    * Get the influxdb-creds put into the image
-    * Just put the name bit, into the existing containers section, above the existing name
-        Spec:
-          containers:
-          - name: influxdb
-            image: docker.io/influxdb:1.6.4
-            envFrom:
-            - secretRef:
-                name: influxdb-creds
-
-* ALTERNITAVLEY This can be an object file, kubectl apply -f filename.yml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: influxdb
-  name: influxdb
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: influxdb
-  template:
-    metadata:
-      labels:
-        app: influxdb
-    spec:
-      containers:
-      - envFrom:
-        - secretRef:
-            name: influxdb-creds
-        image: docker.io/influxdb:1.6.4
-        name: influxdb
-
-
-
-
-kubectl describe deployment influxdb
-* you should now see:
-    * Environment Variables from:
-      influxdb-creds  Secret  Optional: false
-
-* Permanent data stores : A persistent volume ( prevents data loss upon pod recycling )
-
-* Create a persistent volume
-kind: PersistentVolume
-apiVersion: v1
-metadata:
-  name: models-1-0-0
-  labels:
-    name: models-1-0-0
-spec:
-  capacity:
-    storage: 200Gi
-  storageClassName: standard
-  accessModes:
-    - ReadOnlyMany
-  gcePersistentDisk:
-    pdName: models-1-0-0
-    fsType: ext4
-    readOnly: true
+b) Create the persistent volume claims:
 
 * PVC : Persistent volume claim
 * kubectl create -f pvc.yml
 * kubectl get pvc
 
-
 * Check the storage classes
     * kubectl get sc
 
 * this pvc comes from azure
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: azure-managed-disk
-spec:
-  accessModes:
-  - ReadWriteOnce
-  storageClassName: managed-premium
-  resources:
-    requests:
-      storage: 5Gi
+
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: azure-managed-disk
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: managed-premium ( standard should probably be used here )
+      resources:
+        requests:
+          storage: 5Gi
+
+* How to check if the pvc went through:
+    * kubectl get pvc -> status is approved
+    * az disk list
+    * If the claim went through, aks would have a matching disk of the same size
 
 * mount and make a claim:
 spec:
@@ -342,18 +266,13 @@ spec:
     spec:
       containers:
         volumeMounts:
-        - mountPath: /mnt/azure
+        - mountPath: /var/lib/influxdb
           name: volume
 
       volumes:
       - name: volume
         persistentVolumeClaim:
           claimName: azure-managed-disk
-
-* Mounting the pvc:
-* kubectl get pvc
-* Add this to the deployment yml and apply
-* Add this to the deployment yml and apply, to mount the volume
 
 * Finished deployment yml:
 apiVersion: extensions/v1beta1
@@ -410,14 +329,96 @@ spec:
           claimName: influxdb
 status: {}
 
+D) Check the setup:
+    connect using influx 
 
-* What i need to do:
-    * Recycle the pod:
-        * Check if the env variables took, for the login details
-        * Check if the pvc is still there
-        * check if the data persisted, after the recycle
+    create a database
+
+    put some data in
+
+    kubectl rollout restart deployment influxdb
+
+    restarts a service and all pods attached to it
+
+    Reconnect and check the claim
 
 ----
+
+/Setting environment variables
+
+apiVersion: v1
+data:
+  INFLUXDB_DATABASE: "test"
+  INFLUXDB_DB: "test"
+  INFLUXDB_ADMIN_ENABLED: "true"
+  INFLUXDB_ADMIN_PASSWORD: "password"
+  INFLUXDB_USER: "tgsluser"
+  INFLUXDB_USER_PASSWORD: "password"
+kind: Secret
+metadata:
+  name: influxdb-creds
+  namespace: default
+type: Opaque
+
+apiVersion: v1
+data:
+  INFLUXDB_DATABASE: 
+  INFLUXDB_HOST: 
+  INFLUXDB_PASSWORD: 
+  INFLUXDB_USERNAME: 
+kind: Secret
+metadata:
+  name: influxdb-creds
+  namespace: default
+type: Opaque
+
+* kubectl get secrets
+* kubectl describe secrets influxdb-creds
+
+Either is good, as the above cmd one can be used with keyvault.
+
+* edit the deployment
+    * Get the influxdb-creds put into the image
+    * Just put the name bit, into the existing containers section, above the existing name
+        Spec:
+          containers:
+  e       - name: influxdb
+            image: docker.io/influxdb:1.6.4
+            envFrom:
+            - secretRef:
+                name: influxdb-creds
+
+* ALTERNITAVLEY This can be an object file, kubectl apply -f filename.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: influxdb
+  name: influxdb
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: influxdb
+  template:
+    metadata:
+      labels:
+        app: influxdb
+    spec:
+      containers:
+      - envFrom:
+        - secretRef:
+            name: influxdb-creds
+        image: docker.io/influxdb:1.6.4
+        name: influxdb
+
+
+
+
+kubectl describe deployment influxdb
+* you should now see:
+    * Environment Variables from:
+      influxdb-creds  Secret  Optional: false
 
 expose the deployment
 https://opensource.com/article/19/2/deploy-influxdb-grafana-kubernetes
