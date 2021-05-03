@@ -5,20 +5,20 @@
 ---
 
 # 1) Hello AKS!
-## Getting a cluster setup via terraform
+## A) Getting a cluster setup via terraform
 * Terraform:
     * setup a resource group
     * setup the cluster via terraform
         * output the resource group name
         * output the cluster name
-        * try and output the names into powershell variables
+        * try and output the names into powershell variables, cleanly
 
 * Test: go into the portal, and confirm you have
-        * A resource group, containing just the kubernetes cluster
-        * A network watcher
-        * A resource group that contains network virtual appliances the load balancers, public ip, etc.
+    * A resource group, containing just the kubernetes cluster
+    * A network watcher
+    * A resource group that contains network virtual appliances the load balancers, public ip, etc.
 
-## Get the credentials
+## B) Get the credentials
 * Get the credential, using the terraform outputs
     * set the terraform outputs for the resourceGroupName 
     * Set powershell variables that contain the terraform outputs:
@@ -30,9 +30,14 @@
 * Test: $ kubectl config view
     * the configs shown, match the values you expected, from the terraform outputs
 
-## Getting the image running on your cluster
+## C) Getting the image running on your cluster
 * Create a deployment, to your cluster, of the image
+    * Images:
+        * k8s.gcr.io/echoserver:1.4 -> Uses port 8080
+        * docker.io/ealen/echo-server:latest -> Uses port 80
+
     * confirm that the deployment is there, using kubectl
+
     * confirm that the pods are running, using kubectl
 
 * Create the port exposure service for the image
@@ -45,7 +50,11 @@
     * Query the ip address of the loadbalancer, and the port of the service
     * You should get a readout on what's going on
 
-## Tear it all down:
+    * Format the output to be nicer:
+        * const value=document.querySelector("body > pre").innerText; var form=JSON.stringify(JSON.parse(value),undefined,2);document.querySelector("body > pre").innerText=form
+        * var value=document.querySelector("body > pre").innerText; var form=JSON.stringify(JSON.parse(value),undefined,2);document.querySelector("body").innerHTML=`<pre type="json"> ${form} </pre>`;
+
+## D) Tear it all down:
 * Tear down everything in the cluster:
     * Tear down the services
     * Tear down the deployment

@@ -1,4 +1,4 @@
-# 1) Hello AKS
+j 1) Hello AKS
 
 * The location of the .kube config file is:
     * ~/.kube/config
@@ -41,7 +41,7 @@ resource "azurerm_kubernetes_cluster" "cluster" {
             * kubectl get services, to check the name and that it's there
 
         * Create the loadbalancer service
-            * kubectl expose deployment helloaks --type=LoadBalancer --name=public --port=8080
+            * kubectl expose deployment helloaks --type=LoadBalancer --name=public --port=80 --targetPort=8080
             * the --name is the name of the service created, to expose the one from earlier
 
         * Test : Check that the thing as available from outside
@@ -146,6 +146,7 @@ a) Get the cluster setup, you know the drill
 b) Get the image deployed:
     * name : echo
     * image : k8s.gcr.io/echoserver:1.4
+    * Try this image too : https://hub.docker.com/r/ealen/echo-server
 
 apiVersion: apps/v1
 kind: Deployment
@@ -201,7 +202,40 @@ spec:
   type: LoadBalancer
 
 
-E) Teardown the setup and the contexts
+E) Environment variables
+
+* Creating the secrets
+apiVersion: v1
+data:
+  INFLUXDB_DATABASE: "test"
+  INFLUXDB_DB: "test"
+  INFLUXDB_ADMIN_ENABLED: "true"
+  INFLUXDB_ADMIN_PASSWORD: "password"
+  INFLUXDB_USER: "tgsluser"
+  INFLUXDB_USER_PASSWORD: "password"
+kind: Secret
+metadata:
+  name: influxdb-creds
+  namespace: default
+type: Opaque
+
+* Adding them to the deployment:
+spec:
+  containers:
+  - envFrom:
+    - secretRef:
+        name: influxdb-creds
+    image: docker.io/influxdb:1.6.4
+    imagePullPolicy: IfNotPresent
+    name: influxdb
+    resources: {}
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+
+NOTE : Try this image instead
+https://hub.docker.com/r/ealen/echo-server
+
+F) Teardown the setup and the contexts
     * Delete the contexts
     * Tear everything down from the environment
 
@@ -223,6 +257,58 @@ a) setup:
     * kubectl expose deployment influxdb --port=8086 --target-port=8086 --protocol=TCP --type=ClusterIP
     * kubectl expose deployment influxdb --type=LoadBalancer --name="influxdb-public" --port=8086
 
+* Create the deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: echo
+  name: echo
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: echo
+  template:
+    metadata:
+      labels:
+        app: echo
+    spec:
+      containers:
+      - name: echoserver
+        image: k8s.gcr.io/echoserver:1.4
+
+* Expose the ports
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: echo
+  name: echo
+  namespace: default
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+
+* Setup the loadbalancer
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: echo
+  name: echo-public
+spec:
+  ports:
+  - nodePort: 31503
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: echo
+  type: LoadBalancer
+
 * install the influxdb cli tool
     * choco install influxdb
     * binary is called "influx"
@@ -242,18 +328,17 @@ b) Create the persistent volume claims:
     * kubectl get sc
 
 * this pvc comes from azure
-
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      name: azure-managed-disk
-    spec:
-      accessModes:
-      - ReadWriteOnce
-      storageClassName: managed-premium ( standard should probably be used here )
-      resources:
-        requests:
-          storage: 5Gi
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: azure-managed-disk
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: managed-premium ( standard should probably be used here )
+  resources:
+    requests:
+      storage: 2Gi
 
 * How to check if the pvc went through:
     * kubectl get pvc -> status is approved
