@@ -167,3 +167,55 @@
 ---
 
 # 4) Setting up an influx db server
+## Setup)
+* Setup the kubernetes cluster
+* You know the drill
+
+## Write the deployment and service yaml)
+* Create a deployment for an influxdb image
+    * This kata was designed using image version 1.6.4
+* Create a service that exposes port 8086
+* Create a service that exposes that port to the internet
+
+* test:
+    * Open the port in the browser, you should get a 404 message
+
+    * Install the influx tool
+    * connect to that port on the server
+    * influx -host 20.49.134.194 -port 8086
+    * You should be able to connect
+
+## Check databases don't yet persist:
+* Connect to the influxdb instance
+* create a database
+    * create database katatest
+* Restart the pods
+* Reconnect
+    * Confirm that your database is no longer there
+
+
+## Persistent Volume Claim)
+* Write the 
+* Create the object
+* Run it
+
+* Test:
+    * kubectl get pvc -> shows your pvc, is using the managed-premium type
+
+## Mount the volume)
+* Mount the volume in the container
+* Give the container the pvc
+* test:
+    * Describe the things, check
+    * az disk list -> Should show the new disk, with the matching size ( 2g as of writing this )
+
+## Restart and recheck)
+* Create a database and add a value
+    * connect with influx
+    * create database test
+
+* Restart the deployment
+    * kubectl rollout restart deployment influxdb
+
+* It should still be there
+
