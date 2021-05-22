@@ -193,7 +193,7 @@ metadata:
   name: echo-public
 spec:
   ports:
-  - nodePort: 31503
+  - nodePort: 31503 #Uh shit, what do i do about this? Leave it?
     port: 8080
     protocol: TCP
     targetPort: 8080
@@ -205,44 +205,28 @@ spec:
 E) Environment variables
 
 * Creating the secrets
-apiVersion: v1
-data:
-  INFLUXDB_DATABASE: "test"
-  INFLUXDB_DB: "test"
-  INFLUXDB_ADMIN_ENABLED: "true"
-  INFLUXDB_ADMIN_PASSWORD: "password"
-  INFLUXDB_USER: "tgsluser"
-  INFLUXDB_USER_PASSWORD: "password"
-kind: Secret
+apiVersion : v1
+kind : Secret
 metadata:
-  name: influxdb-creds
-  namespace: default
-type: Opaque
+  name : secret
+  namespace : default
+data:
+  secret : "mySecret"
+type : Opaque
 
 * Adding them to the deployment:
-spec:
-  containers:
-  - envFrom:
-    - secretRef:
-        name: influxdb-creds
-    image: docker.io/influxdb:1.6.4
-    imagePullPolicy: IfNotPresent
-    name: influxdb
-    resources: {}
-    terminationMessagePath: /dev/termination-log
-    terminationMessagePolicy: File
-
-NOTE : Try this image instead
-https://hub.docker.com/r/ealen/echo-server
+containers:
+- envFrom:
+  - secretRef:
+      name: secret
+  image: docker.io/influxdb:1.6.4
+  env:
+  - name: myenv
+    value : myvalue
 
 F) Teardown the setup and the contexts
     * Delete the contexts
     * Tear everything down from the environment
-
-z) Shit to add to anki
-
-kubectl get deployment name -o yaml : Effect?
-Output a yaml file, describing a deployment : Syntax? 
 
 --------------- --------------- --------------- --------------- --------------- --------------- --------------- --------------- ---------------
 
@@ -461,17 +445,6 @@ type: Opaque
 * kubectl describe secrets influxdb-creds
 
 Either is good, as the above cmd one can be used with keyvault.
-
-* edit the deployment
-    * Get the influxdb-creds put into the image
-    * Just put the name bit, into the existing containers section, above the existing name
-        Spec:
-          containers:
-  e       - name: influxdb
-            image: docker.io/influxdb:1.6.4
-            envFrom:
-            - secretRef:
-                name: influxdb-creds
 
 * ALTERNITAVLEY This can be an object file, kubectl apply -f filename.yml
 apiVersion: apps/v1

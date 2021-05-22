@@ -4,14 +4,13 @@
 
 ---
 
-# 1) Hello AKS!
+# 1) Terraform + Setup 
 ## A) Getting a cluster setup via terraform
+* Create a directory for terraform
 * Terraform:
     * setup a resource group
     * setup the cluster via terraform
-        * output the resource group name
-        * output the cluster name
-        * try and output the names into powershell variables, cleanly
+        * output the resource group name + cluster name
 
 * Test: go into the portal, and confirm you have
     * A resource group, containing just the kubernetes cluster
@@ -68,19 +67,43 @@
 ---
 
 
-# 2) Working with existing cluster : Logs, logging and getting those logs
-## Use AZ to get all the details
-* ( Deploy the existing cluster, via the infrastructure repo, if not running )
-* Get an object that contains just the name and resourceGroup, and the powerState
-* Activate the instance, if it's power state is "Stopped"
-* get the credentials
-* Check that you're using this context, in the config
-* I want to deploy an image, if there isn't already a service on the cluster
+#######################################################################
+##
+## This kata is on hold, and cannot be done, until the
+## The problem of not being able to connect to the pods has been 
+## Resolved.
+##
+#######################################################################
 
-## Get the pod details and the logs:
+# 2) Working with existing cluster : Logs, logging and getting those logs
+## A) Use AZ to get all the details
+* ( Deploy the existing cluster, via the infrastructure repo, if not running )
+
+* Use az to:
+    * Get an object containing : resourceGroup, powerState, clusterName
+
+* Activate the instance, if it's power state is "Stopped"
+
+* get the credentials
+
+* Check that you're using this context, in the config
+
+* Deploy the echo image:
+    * deploy the image
+        * k8s.gcr.io/echoserver:1.4 -> Uses port 8080
+    * setup the ports
+    * Get a public ip address
+    * Re-route it to port 80
+
+## B) Get the pod details and the logs:
 * Get the endpoint
 * Query the endpoint, to generate the logs
-* Get the name of the pods, the names only, nothing else, save it into a variable
+
+* Get the name of the pod, 
+    * no headers
+    * the name only 
+    * save it into a variable
+
 * Get the logs
 
 ## Setup a storage account to save those logs into
@@ -101,37 +124,46 @@
 ---
 
 
-3) Kata one, but you're only allowed to use yml files
+# 3) Kata one, but you're only allowed to use yml files
 
-a) Get the cluster setup, you know the drill
-    * Invoke the terraform
-    * Get the config into kubectl
+## a) Get the cluster setup, you know the drill
+* Invoke the terraform
+* Get the config into kubectl
 
-b) Get the image deployed, using $kubectl apply -f file :
-    * name : echo
-    * image : k8s.gcr.io/echoserver:1.4
+## b) Get the image deployed, using $kubectl apply -f file :
+* name : echo
+* image name : ealen/echo-server 
+* Image : https://hub.docker.com/r/ealen/echo-server
+* This image uses port 80
 
-C) Exposing the echo service, using -f:
-    * Expose the port 8080
+## C) Exposing the echo service, using -f:
+* Expose the port 80
 
-D) Exposing the load balancer service, using -f:
-    * Expose the port, using the load balancer service
+## D) Exposing the load balancer service, using -f:
+* Expose the port, using the load balancer service
 
-E) Teardown the setup and the contexts
-    * Delete the contexts
-    * Tear everything down from the environment
+* Tests:
+    * You can now query the ip address, from above, and get a response on port 80
 
-E) Could:
-Use a different image
+## E) Setup the environment variables
+* If using the ealen/echo-server image, the env variables will be displayed along with the response
+* Create the secret
+* add the secret to the deployment
 
-https://hub.docker.com/r/ealen/echo-server
+* Also add another environment variable, called "JAKE_TEST" with a value of "Yes"
 
-Set environment variables ( Everything at the bottom of the file )
+* Tests:
+    * Validate that the secret exists, in the list of secrets
+    * Check The secrets in the deployment, via the kubectl commands
+    * Check that the secret is an environment variable, from the http endpoint
 
-pass them into the image
+    * check that the "JAKE_TEST" environment variable is set the response
 
-Check that they're getting set via the thing
+## F) Teardown the setup and the contexts
+* Delete the contexts
+* Tear everything down from the environment
+
 
 ---
 
-
+# 4) Setting up an influx db server
