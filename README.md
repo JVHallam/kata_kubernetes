@@ -145,18 +145,27 @@
 * Tests:
     * You can now query the ip address, from above, and get a response on port 80
 
-## E) Setup the environment variables
-* If using the ealen/echo-server image, the env variables will be displayed along with the response
-* Create the secret
-* add the secret to the deployment
+## E) Create a secret yml:
+* Create a secret using a yml
+    * Have the key be "LOGINNAME"
+    * Set the value to be "ADMIN"
+    * Set the type to opaque
+    * Call it details
 
-* Also add another environment variable, called "JAKE_TEST" with a value of "Yes"
+* test:
+    * Get the list of secrets, yours should be there
+    * Describe the details secret - Should see the LOGINNAME key there
+
+## E) Setup the environment variables
+* add the secret to the deployment as an environment variable
+
+* Add another environment variable:
+    * call it "JAKE_TEST"
+    * set the value to "yes"
 
 * Tests:
-    * Validate that the secret exists, in the list of secrets
-    * Check The secrets in the deployment, via the kubectl commands
+    * Describe the deployment - You should see both are there
     * Check that the secret is an environment variable, from the http endpoint
-
     * check that the "JAKE_TEST" environment variable is set the response
 
 ## F) Teardown the setup and the contexts
@@ -174,7 +183,9 @@
 ## Write the deployment and service yaml)
 * Create a deployment for an influxdb image
     * This kata was designed using image version 1.6.4
+
 * Create a service that exposes port 8086
+
 * Create a service that exposes that port to the internet
 
 * test:
@@ -193,7 +204,6 @@
 * Reconnect
     * Confirm that your database is no longer there
 
-
 ## Persistent Volume Claim)
 * Write the 
 * Create the object
@@ -205,17 +215,20 @@
 ## Mount the volume)
 * Mount the volume in the container
 * Give the container the pvc
+
 * test:
-    * Describe the things, check
+    * Describe the deployment, check it's claims
     * az disk list -> Should show the new disk, with the matching size ( 2g as of writing this )
 
 ## Restart and recheck)
-* Create a database and add a value
+* Create a database 
     * connect with influx
     * create database test
 
 * Restart the deployment
     * kubectl rollout restart deployment influxdb
 
-* It should still be there
-
+* Test:
+    * After adding a database
+    * After restarting the deployment
+    * It should still be there

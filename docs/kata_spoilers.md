@@ -471,8 +471,6 @@ spec:
         name: influxdb
 
 
-
-
 kubectl describe deployment influxdb
 * you should now see:
     * Environment Variables from:
