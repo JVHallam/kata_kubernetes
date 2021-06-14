@@ -214,6 +214,8 @@
 
 ## Mount the volume)
 * Mount the volume in the container
+    * Path: /var/lib/influxdb
+
 * Give the container the pvc
 
 * test:

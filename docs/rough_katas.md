@@ -3,6 +3,12 @@
 * look into what's created in azure
 * look into the scale sets
 
+# Top priority for the future:
+* Selectors
+    * How do they work, when do i need them, etc.
+    * Labels
+    * MatchLabels
+
 ----------------------------------------------------------------------------------------------------------------------------
 
 ==== * AKS ( TO DO! ) ====
@@ -16,8 +22,6 @@
 
 ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
-
-
 ==== * AKS: ( TO DO! ) ====
     * Attempt to auto scale / add new nodes
     * I don't know how any of this would be done, K6?
@@ -29,32 +33,8 @@
 
 ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 
-kubectl logs helloaks-5f6746c8b6-cfvxr --timestamps > logs.txt
-az aks list 
-
-kubectl get nodes
-
-kubectl describe nodes
-
-# Stuff:
-* how gab got the test seeder logs
-kubectl -n uatrc-mobius-simba logs testseeder-testseeder-55ddb8fcc9-zl52b --timestamps > testseederlogs_new.txt
-
-# Hello world
-* kubectl create deployment hello-minikube --image=k8s.gcr.io/echoserver:1.4
-    * kubectl create deployment name --image=path
-
-# Inspecting contexts
-* Get list of contexts
-* Switch context
-* manage many clusters
-
 # Env variables
 * $ENV:KUBECONFIG=./path/to/config
-
-# Getting logs to persist
-* Getting the logs
-* have them persist via redeployments
 
 # Helm charts and yaml
 * now that i've done the -f katas
